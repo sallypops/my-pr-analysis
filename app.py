@@ -39,6 +39,7 @@ def run_pylint(code):
     Returns:
         list: A list of tuples containing issue messages and line numbers.
     """
+ 
     (pylint_stdout, pylint_stderr) = lint.py_run(code, return_std=True)
     pylint_output = pylint_stdout.getvalue().strip()
     issues = [line.split(':', 2) for line in pylint_output.split('\n')]
