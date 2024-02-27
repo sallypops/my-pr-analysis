@@ -16,7 +16,7 @@ def enforce_max_line_length(code, max_line_length=80):
     """
     corrected_code = []
     comments = []
-    
+
     lines = code.split('\n')
     for i, line in enumerate(lines):
         if len(line) > max_line_length:
@@ -43,7 +43,7 @@ def custom_rules(code):
     # List of regex patterns for custom rules
     custom_rules_patterns = [
         (r"'[^']*'|\"[^\"]*\"|\b\d+\b", "Hardcoded value detected"),
-        (r'def\s+[a-z][a-zA-Z0-9_]*\s*\(.*?\)\s*:', "Improper function naming detected (use snake_case)"),
+        (r'def\s+[a-z][a-z_]*\s*\(.*?\)\s*:', "Improper function naming detected (use snake_case)"),
         (r'\bprint\s*\(', "Print statement detected"),
         (r'\b\d+(\.\d+)?\b', "Magic number detected")
     ]
@@ -59,22 +59,17 @@ def custom_rules(code):
 
 @app.route('/analyze', methods=['POST'])
 def analyze_code():
-    """
-    Analyze the submitted code, apply custom rules, and generate comments for detected issues.
-    """
     data = request.get_json()
     code = data.get('code', '')
 
-    # Apply custom rules
-    custom_rule_comments = custom_rules(code)
+    corrected_code, max_length_comments = enforce_max_line_length(code)
+    custom_rules_comments = custom_rules(code)
 
-    # Enforce maximum line length and generate comments
-    corrected_code, length_comments = enforce_max_line_length(code)
-
-    # Combine comments from custom rules and length enforcement
-    all_comments = custom_rule_comments + length_comments
-
-    return jsonify({'corrected_code': corrected_code, 'comments': all_comments})
+    response = {
+        'corrected_code': corrected_code,
+        'comments': max_length_comments + custom_rules_comments
+    }
+    return jsonify(response)
 
 if __name__ == '__main__':
     app.run(debug=True)
