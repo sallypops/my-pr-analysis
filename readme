@@ -3,3 +3,6 @@
 }
 
 (r'def\s+[a-z][a-zA-Z0-9_]*\s*\(.*?\)\s*:', "Improper function naming detected (use snake_case)")
+
+(r'def\s+[a-zA-Z_]\w*\s*\(.*?\)\s*:', "Improper function naming detected (use snake_case)")
+
