@@ -39,9 +39,10 @@ def run_pylint(code):
     Returns:
         list: A list of tuples containing issue messages and line numbers.
     """
-    pylint_output = pylint.lint.Run(["--disable=all", "--enable=W", "--output-format=parseable", "--reports=n", "-"], do_exit=False, exit=False, stdout=None, stderr=None, script='').linter.check(code)
-    issues = [(message.msg, message.line) for message in pylint_output]
-    return issues
+    (pylint_stdout, pylint_stderr) = lint.py_run(code, return_std=True)
+    pylint_output = pylint_stdout.getvalue().strip()
+    issues = [line.split(':', 2) for line in pylint_output.split('\n')]
+    return [(issue[2], int(issue[0])) for issue in issues if len(issue) >= 3]
 
 @app.route('/analyze', methods=['POST'])
 def analyze_code():
