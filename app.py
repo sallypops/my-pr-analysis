@@ -1,6 +1,5 @@
 from flask import Flask, request, jsonify
 import re
-import pylint.lint
 
 app = Flask(__name__)
 
@@ -17,7 +16,7 @@ def enforce_max_line_length(code, max_line_length=80):
     """
     corrected_code = []
     comments = []
-
+    
     lines = code.split('\n')
     for i, line in enumerate(lines):
         if len(line) > max_line_length:
@@ -29,22 +28,34 @@ def enforce_max_line_length(code, max_line_length=80):
     corrected_code_str = '\n'.join(corrected_code)
     return corrected_code_str, comments
 
-def run_pylint(code):
+def custom_rules(code):
     """
-    Run Pylint on the provided code and extract issues.
+    Apply custom rules to the provided code and generate comments for detected issues.
     
     Args:
         code (str): The input code.
         
     Returns:
-        list: A list of tuples containing issue messages and line numbers.
+        list: A list of comments for detected issues.
     """
-    pylint_output = Run(["--disable=all", "--enable=W", "--output-format=parseable", "--reports=n", "-"], do_exit=False, exit=False, stdout=None, stderr=None, script='').linter.check(code)
-    issues = [(message.msg, message.line) for message in pylint_output]
-    return issues
+    comments = []
     
-    
+    # List of regex patterns for custom rules
+    custom_rules_patterns = [
+        (r"'[^']*'|\"[^\"]*\"|\b\d+\b", "Hardcoded value detected"),
+        (r'def\s+[a-z][a-zA-Z0-9_]*\s*\(.*?\)\s*:', "Improper function naming detected (use snake_case)"),
+        (r'\bprint\s*\(', "Print statement detected"),
+        (r'\b\d+(\.\d+)?\b', "Magic number detected")
+    ]
 
+    # Apply each regex pattern and generate comments for detected issues
+    for i, line in enumerate(code.split('\n')):
+        for pattern, comment in custom_rules_patterns:
+            if re.search(pattern, line):
+                comments.append(f"Line {i+1}: {comment}")
+                break  # Stop searching for this pattern if a match is found
+
+    return comments
 
 @app.route('/analyze', methods=['POST'])
 def analyze_code():
@@ -54,15 +65,16 @@ def analyze_code():
     data = request.get_json()
     code = data.get('code', '')
 
-    # Apply custom rules (enforce maximum line length)
-    corrected_code, comments = enforce_max_line_length(code)
+    # Apply custom rules
+    custom_rule_comments = custom_rules(code)
 
-    # Run Pylint
-    pylint_issues = run_pylint(code)
-    for issue_message, line_number in pylint_issues:
-        comments.append(f"Line {line_number}: {issue_message}")
+    # Enforce maximum line length and generate comments
+    corrected_code, length_comments = enforce_max_line_length(code)
 
-    return jsonify({'corrected_code': corrected_code, 'comments': comments})
+    # Combine comments from custom rules and length enforcement
+    all_comments = custom_rule_comments + length_comments
+
+    return jsonify({'corrected_code': corrected_code, 'comments': all_comments})
 
 if __name__ == '__main__':
     app.run(debug=True)
