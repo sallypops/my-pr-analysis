@@ -43,7 +43,7 @@ def custom_rules(code):
     # List of regex patterns for custom rules
     custom_rules_patterns = [
         (r"'[^']*'|\"[^\"]*\"|\b\d+\b", "Hardcoded value detected"),
-        (r'def\s+[a-z][a-z_]*\s*\(.*?\)\s*:', "Improper function naming detected (use snake_case)"),
+        (r'def\s+[a-z_][a-zA-Z0-9_]*\s*\(.*?\)\s*:', "Improper function naming detected (use snake_case)"),
         (r'\bprint\s*\(', "Print statement detected"),
         (r'\b\d+(\.\d+)?\b', "Magic number detected")
     ]
